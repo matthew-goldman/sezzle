@@ -269,7 +269,7 @@ data "aws_secretsmanager_secret" "openweather_api_key" {
 }
 
 resource "aws_iam_role_policy_attachment" "ecs_task_execution" {
-  role       = aws_iam_role.ecs_task_execution.name
+  role       = data.aws_iam_role.ecs_task_execution.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
 
@@ -281,8 +281,8 @@ resource "aws_ecs_task_definition" "app" {
   requires_compatibilities = ["FARGATE"]
   cpu                      = var.task_cpu
   memory                   = var.task_memory
-  execution_role_arn       = aws_iam_role.ecs_task_execution.arn
-  task_role_arn            = aws_iam_role.ecs_task.arn
+  execution_role_arn       = data.aws_iam_role.ecs_task_execution.arn
+  task_role_arn            = data.aws_iam_role.ecs_task.arn
 
   container_definitions = jsonencode([
     {
@@ -330,7 +330,7 @@ resource "aws_ecs_task_definition" "app" {
       secrets = [
         {
           name      = "OPENWEATHER_API_KEY"
-          valueFrom = aws_secretsmanager_secret.openweather_api_key.arn
+          valueFrom = data.aws_secretsmanager_secret.openweather_api_key.arn
         }
       ]
 

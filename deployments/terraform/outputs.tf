@@ -30,5 +30,5 @@ output "cloudwatch_log_group" {
 
 output "secrets_manager_secret_arn" {
   description = "ARN of the Secrets Manager secret for API key"
-  value       = aws_secretsmanager_secret.openweather_api_key.arn
+  value       = data.aws_secretsmanager_secret.openweather_api_key.arn
 }

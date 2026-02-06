@@ -54,9 +54,9 @@ module "vpc" {
 
 # Security Groups
 resource "aws_security_group" "alb" {
-  name_description = "${var.project_name}-alb-sg"
-  description      = "Security group for Application Load Balancer"
-  vpc_id           = module.vpc.vpc_id
+  name        = "${var.project_name}-alb-sg"
+  description = "Security group for Application Load Balancer"
+  vpc_id      = module.vpc.vpc_id
 
   ingress {
     from_port   = 80
@@ -416,10 +416,8 @@ resource "aws_ecs_service" "app" {
     container_port   = 8080
   }
 
-  deployment_configuration {
-    maximum_percent         = 200
-    minimum_healthy_percent = 100
-  }
+  deployment_maximum_percent         = 200
+  deployment_minimum_healthy_percent = 100
 
   enable_execute_command = true
 

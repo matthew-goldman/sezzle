@@ -104,3 +104,9 @@ variable "image_tag" {
   type        = string
   default     = "latest"
 }
+
+variable "allowed_ip_addresses" {
+  description = "List of IP addresses/CIDR blocks allowed to access the service"
+  type        = list(string)
+  default     = []
+}

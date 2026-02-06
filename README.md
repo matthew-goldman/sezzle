@@ -18,7 +18,7 @@ This service provides weather information via RESTful API with enterprise-grade 
 **Get running in 4 commands:**
 
 ```bash
-# 1. Set your OpenWeatherMap API key
+# 1. Set your OpenWeatherMap API key:
 export OPENWEATHER_API_KEY="your_key_here"
 
 # 2. Set up all AWS resources (one command!)

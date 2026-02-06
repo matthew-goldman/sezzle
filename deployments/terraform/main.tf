@@ -9,11 +9,11 @@ terraform {
   }
 
   backend "s3" {
-    bucket         = "sezzle-weather-terraform-state"
-    key            = "weather-service/terraform.tfstate"
-    region         = "us-east-2"
-    encrypt        = true
-    use_lockfile   = true
+    bucket       = "sezzle-weather-terraform-state"
+    key          = "weather-service/terraform.tfstate"
+    region       = "us-east-2"
+    encrypt      = true
+    use_lockfile = true
   }
 }
 

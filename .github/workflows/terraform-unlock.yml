@@ -66,26 +66,3 @@ jobs:
       run: |
         echo "Verifying state is accessible..."
         terraform state list || echo "State is locked or empty"
-```
-
-**Usage:**
-
-1. Go to your repo: `Actions` → `Unlock Terraform State`
-2. Click `Run workflow`
-3. Enter the Lock ID (from the error message)
-4. Select environment
-5. Click `Run workflow`
-
-**To get the Lock ID when locked:**
-
-The error message will show it:
-```
-Error: Error acquiring the state lock
-
-Lock Info:
-  ID:        abc123-def456-ghi789
-  Path:      sezzle-weather-terraform-state/weather-service/terraform.tfstate
-  Operation: OperationTypeApply
-  Who:       user@hostname
-  Version:   1.14.4
-  Created:   2026-02-06 19:30:00.123 UTC

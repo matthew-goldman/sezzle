@@ -126,7 +126,7 @@ docker-push-aws: docker-build ## Build and push Docker image to AWS ECR
 		docker push $$ECR_URI:latest
 	@echo "✅ Image pushed to ECR"
 
-k8s-logs: ## Show Kubernetes logs
+k8s-deploy: ## Show Kubernetes logs
 	@echo "Deploying to Kubernetes..."
 	@kubectl apply -f deployments/kubernetes/
 

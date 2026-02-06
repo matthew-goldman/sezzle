@@ -90,8 +90,8 @@ terraform-destroy: ## Destroy Terraform infrastructure
 
 setup-aws: ## Complete AWS setup (S3, IAM, ECR, Secrets) - run once before terraform
 	@echo "🚀 Running complete AWS setup..."
-	@chmod +x scripts/setup_aws.sh
-	@./scripts/setup_aws.sh
+	@chmod +x scripts/setup-aws.sh
+	@./scripts/setup-aws.sh
 	@echo ""
 	@echo "📝 Creating terraform.tfvars..."
 	@cd deployments/terraform && \

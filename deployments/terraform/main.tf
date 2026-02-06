@@ -1,6 +1,6 @@
 terraform {
-  required_version = ">= 1.0"
-
+  required_version = ">= 1.4.4"
+  
   required_providers {
     aws = {
       source  = "hashicorp/aws"
@@ -32,7 +32,7 @@ provider "aws" {
 
 # VPC and Networking
 module "vpc" {
-  source  = "terraform-aws-modules/vpc/aws"
+  source = "terraform-aws-modules/vpc/aws"
   version = "~> 5.0"
 
   name = "${var.project_name}-vpc"
@@ -42,8 +42,8 @@ module "vpc" {
   private_subnets = var.private_subnet_cidrs
   public_subnets  = var.public_subnet_cidrs
 
-  enable_nat_gateway   = true
-  single_nat_gateway   = var.environment == "dev"
+  enable_nat_gateway = true
+  single_nat_gateway = var.environment == "dev"
   enable_dns_hostnames = true
   enable_dns_support   = true
 
@@ -54,7 +54,7 @@ module "vpc" {
 
 # Security Groups
 resource "aws_security_group" "alb" {
-  name        = "${var.project_name}-alb-sg"
+  name_description = "${var.project_name}-alb-sg"
   description = "Security group for Application Load Balancer"
   vpc_id      = module.vpc.vpc_id
 
@@ -148,7 +148,7 @@ resource "aws_lb" "main" {
   subnets            = module.vpc.public_subnets
 
   enable_deletion_protection = var.environment == "prod"
-  enable_http2               = true
+  enable_http2              = true
 
   tags = {
     Name = "${var.project_name}-alb"
@@ -304,7 +304,7 @@ resource "aws_iam_role" "ecs_task" {
 
 # Secrets Manager for API key
 resource "aws_secretsmanager_secret" "openweather_api_key" {
-  name        = "${var.project_name}/openweather-api-key"
+  name = "${var.project_name}/openweather-api-key"
   description = "OpenWeatherMap API key"
 
   tags = {
@@ -326,7 +326,7 @@ resource "aws_ecs_task_definition" "app" {
     {
       name  = var.project_name
       image = "${var.ecr_repository_url}:${var.image_tag}"
-
+      
       portMappings = [
         {
           containerPort = 8080
@@ -382,10 +382,10 @@ resource "aws_ecs_task_definition" "app" {
       }
 
       healthCheck = {
-        command     = ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8080/health || exit 1"]
-        interval    = 30
-        timeout     = 5
-        retries     = 3
+        command = ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8080/health || exit 1"]
+        interval = 30
+        timeout = 5
+        retries = 3
         startPeriod = 60
       }
     }
@@ -416,8 +416,10 @@ resource "aws_ecs_service" "app" {
     container_port   = 8080
   }
 
-  deployment_maximum_percent         = 200
-  deployment_minimum_healthy_percent = 100
+  deployment_configuration {
+    maximum_percent         = 200
+    minimum_healthy_percent = 100
+  }
 
   enable_execute_command = true
 

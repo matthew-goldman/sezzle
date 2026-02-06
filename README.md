@@ -88,6 +88,7 @@ curl http://localhost:8080/weather/London
 
 - Go 1.21+
 - Docker
+- Terraform 1.4.4+
 - AWS CLI (for cloud deployment)
 - OpenWeatherMap API key ([get one free](https://openweathermap.org/api))
 

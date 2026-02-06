@@ -108,7 +108,6 @@ jobs:
         cache-to: type=gha,mode=max
         build-args: |
           VERSION=${{ github.sha }}
-          OPENWEATHER_API_KEY=${{ secrets.OPENWEATHER_API_KEY }}
 
   deploy-dev:
     name: Deploy to Dev
@@ -216,7 +215,7 @@ jobs:
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v3
       with:
-        terraform_version: 1.5.0
+        terraform_version: 1.14.4
     
     - name: Terraform Format
       run: terraform fmt -check
@@ -231,15 +230,7 @@ jobs:
       run: terraform plan -out=tfplan
       env:
         TF_VAR_environment: ${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}
-        TF_VAR_task_execution_role_arn: ${{ secrets.TF_VAR_TASK_EXECUTION_ROLE_ARN }}
-        TF_VAR_task_role_arn: ${{ secrets.TF_VAR_TASK_ROLE_ARN }}
-        TF_VAR_ecr_repository_url: ${{ secrets.TF_VAR_ECR_REPOSITORY_URL }}
     
     - name: Terraform Apply
       if: github.ref == 'refs/heads/main'
       run: terraform apply -auto-approve tfplan
-      env:
-        TF_VAR_environment: ${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}
-        TF_VAR_task_execution_role_arn: ${{ secrets.TF_VAR_TASK_EXECUTION_ROLE_ARN }}
-        TF_VAR_task_role_arn: ${{ secrets.TF_VAR_TASK_ROLE_ARN }}
-        TF_VAR_ecr_repository_url: ${{ secrets.TF_VAR_ECR_REPOSITORY_URL }}

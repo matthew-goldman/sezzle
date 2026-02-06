@@ -230,7 +230,14 @@ jobs:
       run: terraform plan -out=tfplan
       env:
         TF_VAR_environment: ${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}
+        TF_VAR_ECR_REPOSITORY_URL: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}
+        TF_VAR_TASK_EXECUTION_ROLE_ARN: ${{ secrets.TF_VAR_TASK_EXECUTION_ROLE_ARN }}
+        TF_VAR_TASK_ROLE_ARN: ${{ secrets.TF_VAR_TASK_ROLE_ARN }}
     
     - name: Terraform Apply
       if: github.ref == 'refs/heads/main'
       run: terraform apply -auto-approve tfplan
+      env:
+        TF_VAR_ECR_REPOSITORY_URL: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}
+        TF_VAR_TASK_EXECUTION_ROLE_ARN: ${{ secrets.TF_VAR_TASK_EXECUTION_ROLE_ARN }}
+        TF_VAR_TASK_ROLE_ARN: ${{ secrets.TF_VAR_TASK_ROLE_ARN }}

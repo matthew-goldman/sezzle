@@ -501,7 +501,9 @@ cat > /tmp/github-actions-policy.json <<EOF
         "iam:ListRolePolicies",
         "logs:*",
         "secretsmanager:*",
-        "application-autoscaling:*"
+        "application-autoscaling:*",
+        "route53:*",
+        "acm:*"
       ],
       "Resource": "*"
     }

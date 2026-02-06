@@ -23,7 +23,7 @@ type Client struct {
 }
 
 // WeatherData represents the weather information
-type WeatherData struct {
+type Data struct {
 	Location    string  `json:"location"`
 	Temperature float64 `json:"temperature"`
 	Conditions  string  `json:"conditions"`
@@ -64,18 +64,18 @@ func NewClient(apiKey, baseURL string, timeout time.Duration) *Client {
 // GetWeather retrieves weather data for a location with retry logic
 func (c *Client) GetWeather(ctx context.Context, location string) (*WeatherData, error) {
 	var lastErr error
-	
+
 	// Correlation ID for tracing
 	correlationID := ctx.Value("correlation_id")
-	
+
 	for attempt := 0; attempt <= c.maxRetries; attempt++ {
 		if attempt > 0 {
 			// Exponential backoff
-			delay := c.retryDelay * time.Duration(1<<uint(attempt-1))
+			delay := c.retryDelay * time.Duration(min(1<<(attempt-1), 10))
 			if delay > 10*time.Second {
 				delay = 10 * time.Second
 			}
-			
+
 			log.Warn().
 				Str("correlation_id", fmt.Sprintf("%v", correlationID)).
 				Str("location", location).
@@ -83,9 +83,9 @@ func (c *Client) GetWeather(ctx context.Context, location string) (*WeatherData,
 				Dur("delay", delay).
 				Err(lastErr).
 				Msg("Retrying weather API request")
-			
+
 			metrics.RecordWeatherAPIRetry(location, fmt.Sprintf("%v", lastErr))
-			
+
 			select {
 			case <-time.After(delay):
 			case <-ctx.Done():
@@ -149,7 +149,7 @@ func (c *Client) fetchWeather(ctx context.Context, location string) (*WeatherDat
 	fullURL := fmt.Sprintf("%s?%s", apiURL, params.Encode())
 
 	// Create request with context
-	req, err := http.NewRequestWithContext(ctx, "GET", fullURL, nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", fullURL, http.NoBody)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
@@ -203,14 +203,14 @@ func isRetryable(err error) bool {
 	}
 
 	errStr := err.Error()
-	
+
 	// Timeout errors are retryable
 	if ctx, ok := err.(interface{ Timeout() bool }); ok && ctx.Timeout() {
 		return true
 	}
 
 	// 5xx errors are retryable
-	if len(errStr) > 0 && errStr[0] == '5' {
+	if errStr != "" && errStr[0] == '5' {
 		return true
 	}
 

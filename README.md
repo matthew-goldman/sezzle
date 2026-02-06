@@ -13,6 +13,30 @@ This service provides weather information via RESTful API with enterprise-grade 
 - **CI/CD automation** via GitHub Actions
 - **SLI/SLO monitoring** with alerting to PagerDuty/Slack
 
+## ⚡ Quick Start
+
+**Get running in 4 commands:**
+
+```bash
+# 1. Set your OpenWeatherMap API key
+export OPENWEATHER_API_KEY="your_key_here"
+
+# 2. Set up all AWS resources (one command!)
+make setup-aws
+
+# 3. Deploy infrastructure
+make terraform-apply
+
+# 4. Build and push Docker image
+make docker-push-aws
+```
+
+**Local development:**
+```bash
+make dev  # Starts service, Redis, Prometheus, Grafana
+curl http://localhost:8080/weather/London
+```
+
 ## 📋 Table of Contents
 
 - [Features](#features)
@@ -84,7 +108,7 @@ export LOG_LEVEL="debug"
 
 3. **Run with Docker Compose**
 ```bash
-make docker-up
+make dev
 ```
 
 OR run locally:
@@ -94,7 +118,7 @@ OR run locally:
 go mod download
 
 # Run the service
-go run cmd/server/main.go
+make run
 ```
 
 4. **Test the service**
@@ -260,61 +284,56 @@ Example log entry:
 
 ### AWS ECS (Recommended)
 
-1. **Set up Terraform backend**
-```bash
-# Create S3 bucket and DynamoDB table for state
-aws s3api create-bucket \
-  --bucket sezzle-weather-terraform-state \
-  --region us-east-2 \
-  --create-bucket-configuration LocationConstraint=us-east-2
+**Complete setup in 4 commands:**
 
-aws dynamodb create-table \
-  --table-name terraform-state-lock \
-  --attribute-definitions AttributeName=LockID,AttributeType=S \
-  --key-schema AttributeName=LockID,KeyType=HASH \
-  --billing-mode PAY_PER_REQUEST \
-  --region us-east-2
+1. **Set your API key**
+```bash
+export OPENWEATHER_API_KEY="your_api_key_here"
 ```
 
-2. **Create ECR repository**
+2. **Run complete AWS setup** (creates S3, DynamoDB, ECR, Secrets, IAM roles)
 ```bash
-aws ecr create-repository \
-  --repository-name weather-service \
-  --region us-east-2
+make setup-aws
 ```
 
-3. **Store API key in Secrets Manager**
+This single command:
+- ✅ Creates S3 bucket for Terraform state
+- ✅ Creates DynamoDB table for state locking
+- ✅ Creates ECR repository for Docker images
+- ✅ Stores API key in Secrets Manager
+- ✅ Creates all IAM roles (ECS + GitHub Actions)
+- ✅ Generates `terraform.tfvars` automatically
+- ✅ Runs `terraform init`
+
+3. **Deploy infrastructure**
 ```bash
-aws secretsmanager create-secret \
-  --name weather-service/openweather-api-key \
-  --secret-string "YOUR_API_KEY" \
-  --region us-east-2
-```
-
-4. **Deploy infrastructure**
-```bash
-cd deployments/terraform
-
-# Initialize Terraform
-terraform init
-
-# Plan deployment
-terraform plan -var="ecr_repository_url=YOUR_ECR_URL"
+# Review the plan
+make terraform-plan
 
 # Apply
-terraform apply -var="ecr_repository_url=YOUR_ECR_URL"
+make terraform-apply
 ```
 
-5. **Configure GitHub Actions**
+4. **Build and push Docker image**
+```bash
+make docker-push-aws
+```
 
-Add these secrets to your GitHub repository:
-- `AWS_ROLE_ARN` - IAM role for OIDC authentication
-- `OPENWEATHER_API_KEY` - Your API key
+5. **Configure GitHub Actions** (for CI/CD)
+
+Add this secret to your GitHub repository:
+- Go to: https://github.com/matthew-goldman/sezzle/settings/secrets/actions
+- Name: `AWS_ROLE_ARN`
+- Value: (shown in setup-aws output)
 
 6. **Deploy via CI/CD**
 ```bash
 git push origin main
 ```
+
+### Manual Setup (Alternative)
+
+If you prefer step-by-step control, see `DEPLOYMENT.md` for detailed instructions.
 
 ### Kubernetes
 
@@ -361,9 +380,19 @@ make build          # Build binary
 make test           # Run tests
 make lint           # Run linters
 make docker-build   # Build Docker image
-make docker-up      # Start with docker-compose
+make dev            # Start development environment (docker-compose)
 make docker-down    # Stop docker-compose
-make deploy         # Deploy to production
+
+# AWS Deployment
+make setup-aws      # Complete AWS setup (S3, IAM, ECR, Secrets)
+make terraform-plan # Run Terraform plan
+make terraform-apply # Apply Terraform changes
+make docker-push-aws # Build and push to AWS ECR
+
+# Kubernetes
+make k8s-deploy     # Deploy to Kubernetes
+make k8s-delete     # Delete from Kubernetes
+make k8s-logs       # Show Kubernetes logs
 ```
 
 ## 🧪 Testing

@@ -17,6 +17,11 @@ import (
 	"golang.org/x/time/rate"
 )
 
+// contextKey is a custom type for context keys to avoid collisions
+type contextKey string
+
+const correlationIDKey contextKey = "correlation_id"
+
 // Handler contains dependencies for API handlers
 type Handler struct {
 	weatherClient *weather.Client
@@ -47,8 +52,8 @@ func (h *Handler) GetWeather(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	correlationID := r.Context().Value("correlation_id")
-	ctx := context.WithValue(r.Context(), "correlation_id", correlationID)
+	correlationID := r.Context().Value(correlationIDKey)
+	ctx := context.WithValue(r.Context(), correlationIDKey, correlationID)
 
 	log.Info().
 		Str("correlation_id", fmt.Sprintf("%v", correlationID)).
@@ -57,7 +62,7 @@ func (h *Handler) GetWeather(w http.ResponseWriter, r *http.Request) {
 
 	// Try cache first
 	cacheKey := fmt.Sprintf("weather:%s", location)
-	var weatherData weather.WeatherData
+	var weatherData weather.Data
 
 	err := h.cache.Get(ctx, cacheKey, &weatherData)
 	if err == nil {
@@ -122,7 +127,9 @@ func (h *Handler) Health(w http.ResponseWriter, r *http.Request) {
 func respondJSON(w http.ResponseWriter, status int, data interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(data)
+	if err := json.NewEncoder(w).Encode(data); err != nil {
+		log.Error().Err(err).Msg("Failed to encode JSON response")
+	}
 }
 
 // respondError writes an error response
@@ -138,13 +145,13 @@ func Chain(handler http.Handler, cfg *config.Config) http.Handler {
 	handler = loggingMiddleware(handler)
 	handler = metricsMiddleware(handler)
 	handler = correlationIDMiddleware(handler)
-	
+
 	if cfg.RateLimit.Enabled {
 		handler = rateLimitMiddleware(handler, cfg.RateLimit.RequestsPerSecond, cfg.RateLimit.Burst)
 	}
-	
+
 	handler = recoveryMiddleware(handler)
-	
+
 	return handler
 }
 
@@ -160,7 +167,7 @@ func correlationIDMiddleware(next http.Handler) http.Handler {
 		w.Header().Set("X-Correlation-ID", correlationID)
 
 		// Add to context
-		ctx := context.WithValue(r.Context(), "correlation_id", correlationID)
+		ctx := context.WithValue(r.Context(), correlationIDKey, correlationID)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
@@ -169,7 +176,7 @@ func correlationIDMiddleware(next http.Handler) http.Handler {
 func loggingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
-		correlationID := r.Context().Value("correlation_id")
+		correlationID := r.Context().Value(correlationIDKey)
 
 		// Create response writer wrapper to capture status code
 		wrapped := &responseWriter{ResponseWriter: w, statusCode: http.StatusOK}
@@ -209,7 +216,7 @@ func metricsMiddleware(next http.Handler) http.Handler {
 
 		duration := time.Since(start).Seconds()
 		endpoint := normalizeEndpoint(r.URL.Path)
-		
+
 		metrics.RecordHTTPRequest(
 			r.Method,
 			endpoint,
@@ -227,12 +234,12 @@ func rateLimitMiddleware(next http.Handler, rps float64, burst int) http.Handler
 		if !limiter.Allow() {
 			endpoint := normalizeEndpoint(r.URL.Path)
 			metrics.RecordRateLimitExceeded(endpoint)
-			
+
 			log.Warn().
-				Str("correlation_id", fmt.Sprintf("%v", r.Context().Value("correlation_id"))).
+				Str("correlation_id", fmt.Sprintf("%v", r.Context().Value(correlationIDKey))).
 				Str("path", r.URL.Path).
 				Msg("Rate limit exceeded")
-			
+
 			respondError(w, http.StatusTooManyRequests, "Rate limit exceeded")
 			return
 		}
@@ -247,10 +254,10 @@ func recoveryMiddleware(next http.Handler) http.Handler {
 		defer func() {
 			if err := recover(); err != nil {
 				log.Error().
-					Str("correlation_id", fmt.Sprintf("%v", r.Context().Value("correlation_id"))).
+					Str("correlation_id", fmt.Sprintf("%v", r.Context().Value(correlationIDKey))).
 					Interface("panic", err).
 					Msg("Panic recovered")
-				
+
 				respondError(w, http.StatusInternalServerError, "Internal server error")
 			}
 		}()

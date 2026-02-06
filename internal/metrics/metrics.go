@@ -7,7 +7,7 @@ import (
 
 var (
 	// HTTP Request Metrics
-	
+
 	// httpRequestsTotal tracks the total number of HTTP requests received
 	// USE CASE: Track request volume and identify traffic patterns
 	// ALERT: Sudden drops may indicate service unavailability or upstream issues
@@ -172,7 +172,7 @@ func Init() {
 func RecordHTTPRequest(method, endpoint, status string, duration float64) {
 	httpRequestsTotal.WithLabelValues(method, endpoint, status).Inc()
 	httpRequestDuration.WithLabelValues(method, endpoint).Observe(duration)
-	
+
 	// Track success for SLI
 	success := "true"
 	if status[0] == '5' || status[0] == '4' { // 4xx and 5xx are failures

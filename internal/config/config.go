@@ -13,9 +13,9 @@ type Config struct {
 	Version     string `envconfig:"VERSION" default:"dev"`
 	LogLevel    string `envconfig:"LOG_LEVEL" default:"info"`
 
-	Server ServerConfig
-	Cache  CacheConfig
-	Weather WeatherConfig
+	Server    ServerConfig
+	Cache     CacheConfig
+	Weather   WeatherConfig
 	RateLimit RateLimitConfig
 }
 
@@ -42,24 +42,24 @@ type WeatherConfig struct {
 	APIKey  string        `envconfig:"OPENWEATHER_API_KEY" required:"true"`
 	BaseURL string        `envconfig:"OPENWEATHER_BASE_URL" default:"https://api.openweathermap.org/data/2.5"`
 	Timeout time.Duration `envconfig:"WEATHER_API_TIMEOUT" default:"5s"`
-	
+
 	// Retry configuration
-	MaxRetries     int           `envconfig:"WEATHER_MAX_RETRIES" default:"3"`
-	RetryDelay     time.Duration `envconfig:"WEATHER_RETRY_DELAY" default:"1s"`
-	RetryMaxDelay  time.Duration `envconfig:"WEATHER_RETRY_MAX_DELAY" default:"10s"`
+	MaxRetries    int           `envconfig:"WEATHER_MAX_RETRIES" default:"3"`
+	RetryDelay    time.Duration `envconfig:"WEATHER_RETRY_DELAY" default:"1s"`
+	RetryMaxDelay time.Duration `envconfig:"WEATHER_RETRY_MAX_DELAY" default:"10s"`
 }
 
 // RateLimitConfig contains rate limiting settings
 type RateLimitConfig struct {
-	Enabled       bool    `envconfig:"RATE_LIMIT_ENABLED" default:"true"`
+	Enabled           bool    `envconfig:"RATE_LIMIT_ENABLED" default:"true"`
 	RequestsPerSecond float64 `envconfig:"RATE_LIMIT_RPS" default:"100"`
-	Burst         int     `envconfig:"RATE_LIMIT_BURST" default:"200"`
+	Burst             int     `envconfig:"RATE_LIMIT_BURST" default:"200"`
 }
 
 // Load reads configuration from environment variables
 func Load() (*Config, error) {
 	var cfg Config
-	
+
 	if err := envconfig.Process("", &cfg); err != nil {
 		return nil, fmt.Errorf("failed to process config: %w", err)
 	}

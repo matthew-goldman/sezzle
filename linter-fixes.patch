@@ -1,0 +1,58 @@
+# Linter Fixes for Weather Alert Service
+
+Apply these fixes to pass golangci-lint:
+
+## 1. internal/weather/client.go
+
+### Fix 1: Rename WeatherData to Data (remove stutter)
+Change `type WeatherData struct` to `type Data struct`
+
+### Fix 2: Fix integer overflow
+Line 74: Change to:
+```go
+delay := c.retryDelay * time.Duration(min(1<<(attempt-1), 10))
+```
+
+### Fix 3: Use http.NoBody
+Line 152: Change to:
+```go
+req, err := http.NewRequestWithContext(ctx, "GET", fullURL, http.NoBody)
+```
+
+### Fix 4: Simplify string check  
+Line 213: Change to:
+```go
+if errStr != "" && errStr[0] == '5' {
+```
+
+## 2. internal/cache/cache.go
+
+### Add errors import:
+```go
+import (
+    "errors"
+    // ... other imports
+)
+```
+
+### Fix Redis error check (line 172):
+```go
+if errors.Is(err, redis.Nil) {
+```
+
+## 3. internal/api/handler.go - ALREADY FIXED IN NEW VERSION
+
+## 4. Run gofmt:
+```bash
+gofmt -w internal/
+go fmt ./...
+```
+
+## Quick Fix Command:
+```bash
+# Format everything
+gofmt -w .
+go fmt ./...
+
+# Then manually apply the fixes above or download the corrected files
+```

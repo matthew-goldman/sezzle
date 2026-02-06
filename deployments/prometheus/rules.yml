@@ -1,0 +1,179 @@
+groups:
+  - name: weather_service_alerts
+    interval: 30s
+    rules:
+      # SLO-based alerts: Error Budget Burn Rate
+      # These alerts fire when we're burning through our error budget too quickly
+      # Assuming 99.9% availability SLO (0.1% error budget)
+      
+      - alert: HighErrorBudgetBurnRate
+        expr: |
+          (
+            sum(rate(weather_request_success_total{success="false"}[5m]))
+            /
+            sum(rate(weather_request_success_total[5m]))
+          ) > 0.01
+        for: 5m
+        labels:
+          severity: critical
+          component: weather-service
+        annotations:
+          summary: "High error rate detected"
+          description: "Error rate is {{ $value | humanizePercentage }} over the last 5 minutes, burning error budget rapidly. This will exhaust our monthly error budget in {{ with query \"(0.001 / (sum(rate(weather_request_success_total{success='false'}[5m])) / sum(rate(weather_request_success_total[5m])))) * 30\" }}{{ . | first | value | humanizeDuration }}{{ end }}."
+          runbook_url: "https://github.com/matthew-goldman/sezzle/wiki/runbooks/high-error-rate"
+
+      # Latency SLI: P99 latency exceeding threshold
+      # Fires when 99th percentile latency > 1s for 5 minutes
+      
+      - alert: HighLatencyP99
+        expr: |
+          histogram_quantile(0.99, 
+            sum(rate(weather_http_request_duration_seconds_bucket[5m])) by (le, endpoint)
+          ) > 1.0
+        for: 5m
+        labels:
+          severity: warning
+          component: weather-service
+        annotations:
+          summary: "High P99 latency on {{ $labels.endpoint }}"
+          description: "P99 latency is {{ $value }}s on endpoint {{ $labels.endpoint }}, exceeding 1s threshold."
+          runbook_url: "https://github.com/matthew-goldman/sezzle/wiki/runbooks/high-latency"
+
+      - alert: CriticalLatencyP99
+        expr: |
+          histogram_quantile(0.99, 
+            sum(rate(weather_http_request_duration_seconds_bucket[5m])) by (le, endpoint)
+          ) > 5.0
+        for: 2m
+        labels:
+          severity: critical
+          component: weather-service
+        annotations:
+          summary: "Critical P99 latency on {{ $labels.endpoint }}"
+          description: "P99 latency is {{ $value }}s on endpoint {{ $labels.endpoint }}, severely impacting user experience."
+          runbook_url: "https://github.com/matthew-goldman/sezzle/wiki/runbooks/high-latency"
+
+      # Upstream API health
+      # Detects when OpenWeatherMap API is failing or slow
+      
+      - alert: UpstreamAPIHighErrorRate
+        expr: |
+          (
+            sum(rate(weather_api_requests_total{status="error"}[5m]))
+            /
+            sum(rate(weather_api_requests_total[5m]))
+          ) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          component: weather-api
+        annotations:
+          summary: "High error rate from upstream weather API"
+          description: "{{ $value | humanizePercentage }} of requests to weather API are failing. Cache may be serving stale data."
+          runbook_url: "https://github.com/matthew-goldman/sezzle/wiki/runbooks/upstream-api-errors"
+
+      - alert: UpstreamAPIDown
+        expr: |
+          (
+            sum(rate(weather_api_requests_total{status="error"}[1m]))
+            /
+            sum(rate(weather_api_requests_total[1m]))
+          ) > 0.9
+        for: 2m
+        labels:
+          severity: critical
+          component: weather-api
+          pagerduty: "true"
+        annotations:
+          summary: "Upstream weather API is down"
+          description: "{{ $value | humanizePercentage }} of weather API requests failing. Service degraded."
+          runbook_url: "https://github.com/matthew-goldman/sezzle/wiki/runbooks/upstream-api-down"
+
+      # Cache health
+      # Monitors cache hit rate and errors
+      
+      - alert: LowCacheHitRate
+        expr: |
+          (
+            sum(rate(weather_cache_hits_total[10m]))
+            /
+            (sum(rate(weather_cache_hits_total[10m])) + sum(rate(weather_cache_misses_total[10m])))
+          ) < 0.5
+        for: 10m
+        labels:
+          severity: warning
+          component: cache
+        annotations:
+          summary: "Low cache hit rate"
+          description: "Cache hit rate is {{ $value | humanizePercentage }}. Expected >50%. May indicate TTL too short or cache eviction issues."
+          runbook_url: "https://github.com/matthew-goldman/sezzle/wiki/runbooks/low-cache-hit-rate"
+
+      - alert: CacheErrors
+        expr: sum(rate(weather_cache_errors_total[5m])) > 0
+        for: 5m
+        labels:
+          severity: critical
+          component: cache
+        annotations:
+          summary: "Cache errors detected"
+          description: "Cache is experiencing errors ({{ $value }} errors/sec). May indicate Redis connectivity issues or memory problems."
+          runbook_url: "https://github.com/matthew-goldman/sezzle/wiki/runbooks/cache-errors"
+
+      # Rate limiting
+      # Detects potential abuse or need for limit adjustment
+      
+      - alert: HighRateLimitRejections
+        expr: sum(rate(weather_rate_limit_exceeded_total[5m])) > 10
+        for: 5m
+        labels:
+          severity: warning
+          component: rate-limiter
+        annotations:
+          summary: "High rate of rate limit rejections"
+          description: "{{ $value }} requests/sec being rate limited. May indicate abuse or legitimate traffic spike."
+          runbook_url: "https://github.com/matthew-goldman/sezzle/wiki/runbooks/rate-limit-exceeded"
+
+      # Service health
+      # Basic availability checks
+      
+      - alert: ServiceDown
+        expr: up{job="weather-service"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: weather-service
+          pagerduty: "true"
+        annotations:
+          summary: "Weather service is down"
+          description: "Weather service has been down for more than 1 minute."
+          runbook_url: "https://github.com/matthew-goldman/sezzle/wiki/runbooks/service-down"
+
+      - alert: HighMemoryUsage
+        expr: |
+          (
+            process_resident_memory_bytes{job="weather-service"}
+            /
+            (1024 * 1024 * 1024)
+          ) > 1.5
+        for: 5m
+        labels:
+          severity: warning
+          component: weather-service
+        annotations:
+          summary: "High memory usage"
+          description: "Service is using {{ $value }}GB of memory. May indicate memory leak."
+          runbook_url: "https://github.com/matthew-goldman/sezzle/wiki/runbooks/high-memory"
+
+      # Retry storms
+      # Detects excessive retry attempts
+      
+      - alert: HighRetryRate
+        expr: sum(rate(weather_api_retries_total[5m])) > 5
+        for: 5m
+        labels:
+          severity: warning
+          component: weather-api
+        annotations:
+          summary: "High API retry rate"
+          description: "{{ $value }} retries/sec occurring. Upstream API may be unstable."
+          runbook_url: "https://github.com/matthew-goldman/sezzle/wiki/runbooks/high-retries"

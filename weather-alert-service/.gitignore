@@ -1,0 +1,54 @@
+# Binaries
+bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+weather-service
+
+# Test coverage
+*.out
+coverage.html
+
+# Go workspace file
+go.work
+
+# Environment files
+.env
+.env.local
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Terraform
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+*.tfvars
+!terraform.tfvars.example
+
+# Docker
+*.log
+
+# Build artifacts
+dist/
+build/
+
+# Credentials
+*.pem
+*.key
+credentials.json
+
+# Temporary files
+tmp/
+temp/

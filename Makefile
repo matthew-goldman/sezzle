@@ -169,4 +169,15 @@ dev: docker-up ## Start development environment
 	@echo "  curl http://localhost:8080/weather/London"
 	@echo "  curl http://localhost:8080/metrics"
 
+terraform-init: ## Initialize Terraform with AWS credentials check
+	@echo "Checking AWS credentials..."
+	@aws sts get-caller-identity > /dev/null || (echo "❌ AWS credentials not configured. Run 'aws configure'" && exit 1)
+	@cd deployments/terraform && terraform init
+
+terraform-plan: terraform-init ## Run Terraform plan
+	@cd deployments/terraform && terraform plan
+
+terraform-apply: terraform-init ## Apply Terraform changes
+	@cd deployments/terraform && terraform apply
+
 .DEFAULT_GOAL := help

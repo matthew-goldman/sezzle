@@ -138,7 +138,7 @@ func (c *Client) GetWeather(ctx context.Context, location string) (*Data, error)
 }
 
 // fetchWeather makes a single request to the weather API
-func (c *Client) fetchWeather(ctx context.Context, location string) (*WeatherData, error) {
+func (c *Client) fetchWeather(ctx context.Context, location string) (*Data, error) {
 	// Build request URL
 	apiURL := fmt.Sprintf("%s/weather", c.baseURL)
 	params := url.Values{}

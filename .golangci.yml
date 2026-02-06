@@ -26,7 +26,8 @@ linters-settings:
     check-blank: true
   
   govet:
-    check-shadowing: true
+    enable:
+      - shadow
   
   gofmt:
     simplify: true
@@ -66,6 +67,9 @@ issues:
   max-same-issues: 0
 
 output:
-  format: colored-line-number
+  formats:
+    - format: github-actions
+      level: warning
+      output: stderr
   print-issued-lines: true
   print-linter-name: true

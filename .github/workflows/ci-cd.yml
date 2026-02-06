@@ -233,6 +233,7 @@ jobs:
         TF_VAR_environment: ${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}
         TF_VAR_task_execution_role_arn: ${{ secrets.TF_VAR_TASK_EXECUTION_ROLE_ARN }}
         TF_VAR_task_role_arn: ${{ secrets.TF_VAR_TASK_ROLE_ARN }}
+        TF_VAR_ecr_repository_url: ${{ secrets.TF_VAR_ECR_REPOSITORY_URL }}
     
     - name: Terraform Apply
       if: github.ref == 'refs/heads/main'
@@ -241,3 +242,4 @@ jobs:
         TF_VAR_environment: ${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}
         TF_VAR_task_execution_role_arn: ${{ secrets.TF_VAR_TASK_EXECUTION_ROLE_ARN }}
         TF_VAR_task_role_arn: ${{ secrets.TF_VAR_TASK_ROLE_ARN }}
+        TF_VAR_ecr_repository_url: ${{ secrets.TF_VAR_ECR_REPOSITORY_URL }}

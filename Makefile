@@ -88,7 +88,45 @@ terraform-apply: ## Apply Terraform changes
 terraform-destroy: ## Destroy Terraform infrastructure
 	@cd deployments/terraform && terraform destroy
 
-k8s-deploy: ## Deploy to Kubernetes
+setup-aws: ## Complete AWS setup (S3, IAM, ECR, Secrets) - run once before terraform
+	@echo "🚀 Running complete AWS setup..."
+	@chmod +x scripts/setup-aws.sh
+	@./scripts/setup-aws.sh
+	@echo ""
+	@echo "📝 Creating terraform.tfvars..."
+	@cd deployments/terraform && \
+		ECR_URI=$$(aws ecr describe-repositories --repository-names weather-service --region us-east-2 --query 'repositories[0].repositoryUri' --output text) && \
+		cat > terraform.tfvars <<-EOF && \
+		ecr_repository_url = "$$ECR_URI" \
+		environment        = "prod" \
+		EOF \
+		echo "✅ terraform.tfvars created"
+	@echo ""
+	@echo "🔧 Initializing Terraform..."
+	@cd deployments/terraform && terraform init
+	@echo ""
+	@echo "✅ Setup complete! Next steps:"
+	@echo ""
+	@echo "1. Review the plan:"
+	@echo "   make terraform-plan"
+	@echo ""
+	@echo "2. Apply infrastructure:"
+	@echo "   make terraform-apply"
+	@echo ""
+	@echo "3. Build and push Docker image:"
+	@echo "   make docker-push-aws"
+	@echo ""
+
+docker-push-aws: docker-build ## Build and push Docker image to AWS ECR
+	@echo "🐳 Pushing Docker image to AWS ECR..."
+	@ECR_URI=$$(aws ecr describe-repositories --repository-names weather-service --region us-east-2 --query 'repositories[0].repositoryUri' --output text) && \
+		echo "ECR URI: $$ECR_URI" && \
+		aws ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin $$ECR_URI && \
+		docker tag weather-service:latest $$ECR_URI:latest && \
+		docker push $$ECR_URI:latest
+	@echo "✅ Image pushed to ECR"
+
+k8s-logs: ## Show Kubernetes logs
 	@echo "Deploying to Kubernetes..."
 	@kubectl apply -f deployments/kubernetes/
 

@@ -241,10 +241,31 @@ echo ""
 # ============================================================================
 # 5. IAM Roles
 # ============================================================================
-echo "👤 Step 5/5: Creating IAM roles..."
+echo "👤 Step 5/5: Creating IAM roles and service-linked roles..."
 echo ""
 
-# 5a. ECS Task Execution Role
+# 5a. Create Service-Linked Roles first
+echo "Creating AWS Service-Linked Roles..."
+
+echo "  - ElastiCache service-linked role..."
+aws iam create-service-linked-role \
+  --aws-service-name elasticache.amazonaws.com \
+  2>/dev/null && echo "    ✅ Created" || echo "    ✅ Already exists"
+
+echo "  - ECS service-linked role..."
+aws iam create-service-linked-role \
+  --aws-service-name ecs.amazonaws.com \
+  2>/dev/null && echo "    ✅ Created" || echo "    ✅ Already exists"
+
+echo "  - Application Auto Scaling service-linked role..."
+aws iam create-service-linked-role \
+  --aws-service-name ecs.application-autoscaling.amazonaws.com \
+  2>/dev/null && echo "    ✅ Created" || echo "    ✅ Already exists"
+
+echo ""
+
+# 5b. ECS Task Execution Role
+# 5b. ECS Task Execution Role
 echo "Creating ECS Task Execution Role..."
 
 cat > /tmp/ecs-task-execution-trust-policy.json <<EOF
@@ -292,6 +313,7 @@ aws iam put-role-policy \
 echo "✅ ECS Task Execution Role created"
 
 # 5b. ECS Task Role
+# 5c. ECS Task Role
 echo "Creating ECS Task Role..."
 
 aws iam create-role \
@@ -324,6 +346,7 @@ aws iam put-role-policy \
 echo "✅ ECS Task Role created"
 
 # 5c. GitHub Actions OIDC Role
+# 5d. GitHub Actions OIDC Role
 echo "Creating GitHub Actions OIDC role..."
 
 # Check if OIDC provider exists
@@ -466,6 +489,13 @@ cat > /tmp/github-actions-policy.json <<EOF
         "elasticache:*",
         "ecs:*",
         "iam:GetRole",
+        "iam:CreateRole",
+        "iam:DeleteRole",
+        "iam:CreateServiceLinkedRole",
+        "iam:AttachRolePolicy",
+        "iam:DetachRolePolicy",
+        "iam:PutRolePolicy",
+        "iam:DeleteRolePolicy",
         "iam:GetRolePolicy",
         "iam:ListAttachedRolePolicies",
         "iam:ListRolePolicies",

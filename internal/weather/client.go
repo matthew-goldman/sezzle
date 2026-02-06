@@ -71,7 +71,7 @@ func (c *Client) GetWeather(ctx context.Context, location string) (*Data, error)
 	for attempt := 0; attempt <= c.maxRetries; attempt++ {
 		if attempt > 0 {
 			// Exponential backoff
-			delay := c.retryDelay * time.Duration(1<<uint(attempt-1))
+			delay := c.retryDelay * time.Duration(1<<min(attempt-1, 10))
 			if delay > 10*time.Second {
 				delay = 10 * time.Second
 			}
@@ -149,7 +149,7 @@ func (c *Client) fetchWeather(ctx context.Context, location string) (*Data, erro
 	fullURL := fmt.Sprintf("%s?%s", apiURL, params.Encode())
 
 	// Create request with context
-	req, err := http.NewRequestWithContext(ctx, "GET", fullURL, nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", fullURL, http.NoBody)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
@@ -210,7 +210,7 @@ func isRetryable(err error) bool {
 	}
 
 	// 5xx errors are retryable
-	if len(errStr) > 0 && errStr[0] == '5' {
+	if errStr != "" && errStr[0] == '5' {
 		return true
 	}
 

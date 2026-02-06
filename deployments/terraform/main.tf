@@ -255,25 +255,17 @@ resource "aws_cloudwatch_log_group" "app" {
 }
 
 # IAM Roles
-resource "aws_iam_role" "ecs_task_execution" {
-  name = "${var.project_name}-ecs-task-execution-role"
 
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action = "sts:AssumeRole"
-        Effect = "Allow"
-        Principal = {
-          Service = "ecs-tasks.amazonaws.com"
-        }
-      }
-    ]
-  })
+data "aws_iam_role" "ecs_task_execution" {
+  name = "WeatherServiceECSTaskExecutionRole"
+}
 
-  tags = {
-    Name = "${var.project_name}-ecs-task-execution-role"
-  }
+data "aws_iam_role" "ecs_task" {
+  name = "WeatherServiceECSTaskRole"
+}
+
+data "aws_secretsmanager_secret" "openweather_api_key" {
+  name = "weather-service/openweather-api-key"
 }
 
 resource "aws_iam_role_policy_attachment" "ecs_task_execution" {
@@ -281,36 +273,6 @@ resource "aws_iam_role_policy_attachment" "ecs_task_execution" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
 
-resource "aws_iam_role" "ecs_task" {
-  name = "${var.project_name}-ecs-task-role"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action = "sts:AssumeRole"
-        Effect = "Allow"
-        Principal = {
-          Service = "ecs-tasks.amazonaws.com"
-        }
-      }
-    ]
-  })
-
-  tags = {
-    Name = "${var.project_name}-ecs-task-role"
-  }
-}
-
-# Secrets Manager for API key
-resource "aws_secretsmanager_secret" "openweather_api_key" {
-  name        = "${var.project_name}/openweather-api-key"
-  description = "OpenWeatherMap API key"
-
-  tags = {
-    Name = "${var.project_name}-openweather-api-key"
-  }
-}
 
 # ECS Task Definition
 resource "aws_ecs_task_definition" "app" {

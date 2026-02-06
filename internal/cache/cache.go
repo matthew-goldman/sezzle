@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"errors"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -22,9 +23,9 @@ type Cache interface {
 
 // MemoryCache implements an in-memory cache with TTL
 type MemoryCache struct {
-	data  map[string]*cacheEntry
-	mu    sync.RWMutex
-	ttl   time.Duration
+	data   map[string]*cacheEntry
+	mu     sync.RWMutex
+	ttl    time.Duration
 	stopCh chan struct{}
 }
 
@@ -169,7 +170,7 @@ func NewRedisCache(addr, password string, ttl time.Duration) (*RedisCache, error
 // Get retrieves a value from Redis
 func (rc *RedisCache) Get(ctx context.Context, key string, dest interface{}) error {
 	val, err := rc.client.Get(ctx, key).Result()
-	if err == redis.Nil {
+	if errors.Is(err, redis.Nil) {
 		metrics.RecordCacheMiss("redis")
 		return fmt.Errorf("cache miss")
 	} else if err != nil {

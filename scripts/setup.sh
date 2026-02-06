@@ -34,7 +34,7 @@ if [ -z "$OPENWEATHER_API_KEY" ]; then
     echo -e "${YELLOW}⚠️  OPENWEATHER_API_KEY environment variable is not set.${NC}"
     echo "Please get a free API key from: https://openweathermap.org/api"
     echo ""
-    read -p "Enter your OpenWeatherMap API key (or press Enter to skip): " API_KEY
+    read -pr "Enter your OpenWeatherMap API key (or press Enter to skip): " API_KEY
     
     if [ ! -z "$API_KEY" ]; then
         export OPENWEATHER_API_KEY="$API_KEY"

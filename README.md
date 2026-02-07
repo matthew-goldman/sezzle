@@ -88,7 +88,7 @@ curl http://localhost:8080/weather/London
 
 - Go 1.21+
 - Docker
-- Terraform 1.4.4+
+- Terraform 1.14.4+
 - AWS CLI (for cloud deployment)
 - OpenWeatherMap API key ([get one free](https://openweathermap.org/api))
 
@@ -322,10 +322,14 @@ make docker-push-aws
 
 5. **Configure GitHub Actions** (for CI/CD)
 
-Add this secret to your GitHub repository:
-- Go to: https://github.com/matthew-goldman/sezzle/settings/secrets/actions
-- Name: `AWS_ROLE_ARN`
-- Value: (shown in setup-aws output)
+Add these secrets to your GitHub repository:
+Go to: https://github.com/matthew-goldman/sezzle/settings/secrets/actions
+
+| Secret | Value | Format |
+|--------|-------|-------|
+| `AWS_ROLE_ARN` | (shown in setup-aws output) | String
+| `OPENWEATHER_API_KEY` | `your_api_key` | String
+| `TF_VAR_ALLOWED_IP_ADDRESSES` | `["1.2.3.4/32"]` | List of Strings
 
 6. **Deploy via CI/CD**
 ```bash

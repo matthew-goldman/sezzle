@@ -452,8 +452,15 @@ go test -race ./...
 - [Runbook: High Error Rate](docs/runbooks/high-error-rate.md)
 - [Runbook: High Latency](docs/runbooks/high-latency.md)
 - [Runbook: Upstream API Issues](docs/runbooks/upstream-api-issues.md)
-- [Architecture Decision Records](docs/adr/)
-- [SLO Dashboard](docs/slo-dashboard.md)
+- [Architecture Diagrams](docs/ARCHITECTURE.md)
+- [ECS vs EKS](docs/ECSvEKS.md)
+- [Future Improvements](docs/FUTURE_IMPROVEMENTS.md)
+- [Observability Summary](docs/OBSERVABILITY_SUMMARY.md)
+- [Obersvability Details](docs/OBSERVABILITY.md)
+- [Project Summary](docs/RELIABILITY_PATTERNS.md)
+- [Requirements Checklist](docs/REQUIREMENTS_CHECKLIST.md)
+- [SLO Dashboard](docs/SLO.md)
+- [Testing](docs/TESTING.md)
 
 ## 🤝 Contributing
 

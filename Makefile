@@ -76,15 +76,6 @@ docker-push: docker-build ## Push Docker image to registry
 	@echo "Pushing $(DOCKER_IMAGE)..."
 	@docker push $(DOCKER_IMAGE)
 
-terraform-init: ## Initialize Terraform
-	@cd deployments/terraform && terraform init
-
-terraform-plan: ## Run Terraform plan
-	@cd deployments/terraform && terraform plan
-
-terraform-apply: ## Apply Terraform changes
-	@cd deployments/terraform && terraform apply
-
 terraform-destroy: ## Destroy Terraform infrastructure
 	@cd deployments/terraform && terraform destroy
 

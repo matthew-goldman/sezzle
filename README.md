@@ -436,7 +436,7 @@ go test -race ./...
 ## 🔐 Security
 
 - ✅ No hardcoded credentials
-- ✅ API keys in AWS Secrets Manager
+- ✅ API keys in Github Secrets
 - ✅ Non-root container user
 - ✅ Read-only root filesystem
 - ✅ Security scanning in CI/CD

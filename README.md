@@ -1,5 +1,9 @@
 # Weather Alert Service
 
+[![CI/CD](https://github.com/matthew-goldman/sezzle/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/matthew-goldman/sezzle/actions)
+[![Go Report Card](https://goreportcard.com/badge/github.com/matthew-goldman/sezzle)](https://goreportcard.com/report/github.com/matthew-goldman/sezzle)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 A production-ready weather alert service demonstrating SRE best practices including comprehensive observability, reliability patterns, and operational excellence.
 
 ## 🎯 Overview
@@ -182,47 +186,20 @@ Prometheus metrics endpoint.
 
 **Response:** Prometheus text format metrics
 
-## ⚙️ Configuration
+## ⚙️ Configuration (Summary)
 
-All configuration via environment variables:
+All configuration via environment variables. **See [CONFIGURATION.md](docs/CONFIGURATION.md) for complete reference.**
 
-### Server Configuration
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `SERVER_PORT` | `8080` | HTTP server port |
-| `SERVER_READ_TIMEOUT` | `10s` | Request read timeout |
-| `SERVER_WRITE_TIMEOUT` | `10s` | Response write timeout |
-| `SERVER_SHUTDOWN_TIMEOUT` | `30s` | Graceful shutdown timeout |
+### Most Important Variables
 
-### Cache Configuration
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `CACHE_TYPE` | `memory` | Cache backend: `memory` or `redis` |
-| `CACHE_TTL` | `5m` | Cache entry TTL |
-| `REDIS_ADDR` | `localhost:6379` | Redis server address |
-| `REDIS_PASSWORD` | `` | Redis password (optional) |
-
-### Weather API Configuration
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `OPENWEATHER_API_KEY` | *required* | OpenWeatherMap API key |
-| `OPENWEATHER_BASE_URL` | `https://api.openweathermap.org/data/2.5` | API base URL |
-| `WEATHER_API_TIMEOUT` | `5s` | API request timeout |
-| `WEATHER_MAX_RETRIES` | `3` | Max retry attempts |
-| `WEATHER_RETRY_DELAY` | `1s` | Initial retry delay |
+| `CACHE_TYPE` | `memory` | Cache backend: `memory` or `redis` |
+| `LOG_LEVEL` | `info` | Log level |
 
-### Rate Limiting
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `RATE_LIMIT_ENABLED` | `true` | Enable rate limiting |
-| `RATE_LIMIT_RPS` | `100` | Requests per second |
-| `RATE_LIMIT_BURST` | `200` | Burst capacity |
+**[→ See complete configuration reference](docs/CONFIGURATION.md)**
 
-### Logging
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `LOG_LEVEL` | `info` | Log level: `debug`, `info`, `warn`, `error` |
-| `ENVIRONMENT` | `development` | Environment name |
 
 ## 📊 Observability
 
@@ -354,6 +331,18 @@ kubectl get svc -n weather-service
 kubectl logs -f -n weather-service deployment/weather-service
 ```
 
+### GitHub Actions Setup
+
+**Required Secrets** (add at: https://github.com/matthew-goldman/sezzle/settings/secrets/actions)
+
+| Secret Name | Description | Example |
+|-------------|-------------|---------|
+| `AWS_ROLE_ARN` | GitHub Actions IAM role | `arn:aws:iam::123456:role/GitHubActionsWeatherService` |
+| `OPENWEATHER_API_KEY` | OpenWeatherMap API key | `abc123def456...` |
+| `ALLOWED_IP_ADDRESSES` | IPs allowed to access (optional) | `["1.2.3.4/32"]` |
+
+**To get AWS_ROLE_ARN**: Output from `make setup-aws`
+
 ## 🛠️ Development
 
 ### Project Structure
@@ -447,20 +436,34 @@ go test -race ./...
 - ✅ TLS for external communication
 - ✅ Rate limiting to prevent abuse
 
-## 📚 Additional Documentation
+## 📚 Documentation
 
-- [Runbook: High Error Rate](docs/runbooks/high-error-rate.md)
-- [Runbook: High Latency](docs/runbooks/high-latency.md)
-- [Runbook: Upstream API Issues](docs/runbooks/upstream-api-issues.md)
-- [Architecture Diagrams](docs/ARCHITECTURE.md)
-- [ECS vs EKS](docs/ECSvEKS.md)
-- [Future Improvements](docs/FUTURE_IMPROVEMENTS.md)
-- [Observability Summary](docs/OBSERVABILITY_SUMMARY.md)
-- [Obersvability Details](docs/OBSERVABILITY.md)
-- [Project Summary](docs/RELIABILITY_PATTERNS.md)
-- [Requirements Checklist](docs/REQUIREMENTS_CHECKLIST.md)
-- [SLO Dashboard](docs/SLO.md)
-- [Testing](docs/TESTING.md)
+### Getting Started
+* [Quick Start](#quick-start) - Get running in 5 minutes
+* [Configuration Guide](docs/CONFIGURATION.md) - All config options
+* [Deployment Guide](docs/DEPLOYMENT.md) - Production deployment
+
+### Architecture & Design
+* [Architecture Diagrams](docs/ARCHITECTURE.md)
+* [ECS vs EKS Decision](docs/ECS_VS_EKS.md)
+* [Future Improvements](docs/FUTURE_IMPROVEMENTS.md)
+
+### Observability
+* [Observability Overview](docs/OBSERVABILITY_SUMMARY.md) - **Start here** for requirements checklist
+* [Observability Deep Dive](docs/OBSERVABILITY.md) - Detailed metric explanations and usage
+* [Metrics Deep Dive](docs/OBSERVABILITY.md)
+* [SLO Dashboard](docs/SLO.md)
+
+### Operations
+* [Runbook: High Error Rate](docs/runbooks/high-error-rate.md)
+* [Runbook: High Latency](docs/runbooks/high-latency.md)
+* [Runbook: Upstream API Issues](docs/runbooks/upstream-api-issues.md)
+
+### Development
+* [Reliability Patterns](docs/RELIABILITY_PATTERNS.md)
+* [Testing Guide](docs/TESTING.md)
+* [Requirements Checklist](docs/REQUIREMENTS_CHECKLIST.md)
+* [CLAUDE.md](CLAUDE.md) - AI assistant context
 
 ## 🤝 Contributing
 

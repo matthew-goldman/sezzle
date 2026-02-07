@@ -1,5 +1,5 @@
 # .github/workflows/terraform-unlock.yml
-name: Unlock Terraform State
+name: "[Terraform] Unlock State"
 
 on:
   workflow_dispatch:

@@ -1,0 +1,108 @@
+# .github/workflows/terraform-destroy.yml
+name: Terraform Destroy
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to destroy (dev/staging/prod)'
+        required: true
+        type: choice
+        options:
+          - dev
+          - staging
+          - prod
+      confirm_destroy:
+        description: 'Type "destroy" to confirm'
+        required: true
+        type: string
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: us-east-2
+  ECR_REPOSITORY: weather-service
+  ECS_CLUSTER: weather-service-cluster
+  ECS_SERVICE: weather-service
+
+jobs:
+  validate:
+    name: Validate Destroy Request
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check confirmation
+        run: |
+          if [ "${{ inputs.confirm_destroy }}" != "destroy" ]; then
+            echo "❌ Confirmation failed. You must type 'destroy' to proceed."
+            exit 1
+          fi
+          echo "✅ Confirmation received"
+
+  destroy:
+    name: Destroy Infrastructure
+    runs-on: ubuntu-latest
+    needs: validate
+    environment:
+      name: ${{ inputs.environment }}-destroy
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+        aws-region: ${{ env.AWS_REGION }}
+    
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: 1.14.4
+    
+    - name: Set ECR variables
+      id: ecr-vars
+      run: |
+        AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+        ECR_URI="${AWS_ACCOUNT_ID}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPOSITORY }}"
+        echo "uri=$ECR_URI" >> $GITHUB_OUTPUT
+    
+    - name: Terraform Init
+      working-directory: ./deployments/terraform
+      run: terraform init
+    
+    - name: Terraform Destroy
+      working-directory: ./deployments/terraform
+      run: terraform destroy -auto-approve
+      env:
+        TF_VAR_environment: ${{ inputs.environment }}
+        TF_VAR_ecr_repository_url: ${{ steps.ecr-vars.outputs.uri }}
+        TF_VAR_allowed_ip_addresses: ${{ secrets.ALLOWED_IP_ADDRESSES }}
+    
+    - name: Summary
+      if: always()
+      run: |
+        echo "## Terraform Destroy Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Environment:** ${{ inputs.environment }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Status:** ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        if [ "${{ job.status }}" == "success" ]; then
+          echo "✅ Infrastructure destroyed successfully" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Note:** The following resources were destroyed:" >> $GITHUB_STEP_SUMMARY
+          echo "- ECS Cluster and Service" >> $GITHUB_STEP_SUMMARY
+          echo "- Application Load Balancer" >> $GITHUB_STEP_SUMMARY
+          echo "- ElastiCache Redis" >> $GITHUB_STEP_SUMMARY
+          echo "- VPC and Networking" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Manual cleanup still required:**" >> $GITHUB_STEP_SUMMARY
+          echo "- ECR repository (if desired)" >> $GITHUB_STEP_SUMMARY
+          echo "- S3 Terraform state bucket" >> $GITHUB_STEP_SUMMARY
+          echo "- IAM roles" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "❌ Destroy failed. Check logs above." >> $GITHUB_STEP_SUMMARY
+        fi

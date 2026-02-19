@@ -79,7 +79,7 @@ jobs:
       env:
         TF_VAR_environment: ${{ inputs.environment }}
         TF_VAR_ecr_repository_url: ${{ steps.ecr-vars.outputs.uri }}
-        TF_VAR_allowed_ip_addresses: ${{ secrets.ALLOWED_IP_ADDRESSES }}
+        TF_VAR_allowed_ip_addresses: ${{ secrets.TF_VAR_ALLOWED_IP_ADDRESSES }}
     
     - name: Summary
       if: always()
